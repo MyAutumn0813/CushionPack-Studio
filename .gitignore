@@ -1,0 +1,22 @@
+# Node
+node_modules/
+frontend/node_modules/
+
+# Vite build
+frontend/dist/
+frontend/.env.production
+backend/.env
+backend/*.log
+backend/.tmp/
+tmp/
+
+# R / renv
+backend/renv/library/
+backend/.Rhistory
+backend/.RData
+backend/database/*
+!backend/database/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
