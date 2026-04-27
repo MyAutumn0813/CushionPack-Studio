@@ -1,149 +1,325 @@
-﻿# React + TypeScript + Vite
+# CushionPack Studio Platform Overview and User Guide
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 1. Technology Stack
+| Layer | Language / Framework | Description |
+| --- | --- | --- |
+| Frontend | TypeScript + React 19 + Vite | Responsible for pages, interactions, state management, and API calls. |
+| Backend API | JavaScript (Node.js ESM) + Express | Responsible for authentication, authorization, file management, task orchestration, project management, and coordination with the R service. |
+| Algorithm Layer | R + plumber + tidymodels + xgboost + ggplot2 | Responsible for model analysis, prediction, SHAP interpretation, and reverse design calculations. |
+| File Processing | `xlsx`, `multer` | Responsible for Excel/CSV reading and writing, and uploaded file handling. |
+| Data Storage | Local file system + JSON | Responsible for persistence of the model library, task results, users, sessions, and project metadata. |
 
-## 生产部署环境变量
+### Summary
+- Frontend language: **TypeScript**
+- Primary backend language: **JavaScript**
+- Algorithm/modeling language: **R**
 
-这个仓库公开发布时，至少需要配置下面两类环境变量：
+In other words, this system is not a simple two-layer frontend/backend structure. It consists of:
 
-- 前端构建变量：`frontend/.env.production` 中的 `VITE_API_BASE_URL`
-- 后端运行变量：部署平台或启动命令里注入的 `PORT`、`R_HOME`、`RSCRIPT_PATH` 等变量
+1. A React frontend
+2. A Node/Express API layer
+3. An R plumber algorithm service layer
 
-### 前端
+## 2. Key Directory Overview
+The platform codebase mainly includes the following:
+- `frontend/`
+  - React frontend project.
+- `frontend/src/App.tsx`
+  - Main frontend framework that controls authentication state, sidebar, page switching, projects, and task history.
+- `frontend/src/pages/Library.tsx`
+  - Model library page.
+- `frontend/src/pages/New task.tsx`
+  - New task page, supporting both single-task and batch prediction.
+- `frontend/src/pages/Explore.tsx`
+  - Reverse design page.
+- `frontend/src/features/api.ts`
+  - Unified frontend API request wrapper.
+- `backend/server.mjs`
+  - Main Node/Express service.
+- `backend/r-api/library-api.R`
+  - R plumber API providing prediction, SHAP, reverse design, accuracy analysis, and related capabilities.
+- `backend/r-api/run-library-api.R`
+  - R plumber startup entry point.
+- `backend/database/`
+  - Data directory for users, sessions, and the model library.
+- `backend/data/New task/`
+  - Storage directory for new task input files, prediction result files, and task summaries.
 
-仓库已提供示例文件 `frontend/.env.production.example`。
+## 3. Web Platform User Guide
+The current web platform is a developer preview. Users can access the main features, and platform security will continue to be improved later.
 
-```env
-VITE_API_BASE_URL=https://your-domain.example.com
+### 3.1 Login and Registration
+Access the platform through the following link:
+```text
+https://cushionpackaging.fy.takin.cc
+```
+When entering the system for the first time, the login page is shown first.
+- `Sign up`: register a local account
+- `Sign in`: log in with an existing account
+
+At present, users can log in directly with an email address and password.
+Rules:
+- The email address must be valid
+- The password must be at least 8 characters long
+
+After a successful login, the frontend stores `token + user` in browser storage.
+
+### 3.2 Home
+The Home page is mainly used to present the system positioning and capability overview. It does not participate in data computation.
+
+### 3.3 Library
+Library is the model management center, with four main purposes:
+1. View existing product models
+2. Upload and deploy new models
+3. Activate a specific model version
+4. View model analysis results
+
+Typical workflow:
+1. Select `Product type`
+2. Select `Product name`
+3. View the currently active model version, update time, and model file name
+4. Click `Deploy model` to open the upload dialog
+5. Fill in:
+   - `Product type`
+   - `Product name`
+   - `Model version`
+6. Upload files:
+   - Required: `all model file`
+   - Required: `final model file`
+   - Required: `data train file`
+   - Required: `data test file`
+   - Optional: `Validation_accuracy.xlsx`
+   - Optional: `Best_hyperparamter.xlsx`
+7. After the upload is complete, you can perform the following actions on a version:
+   - `Activate`
+   - `Delete version`
+
+The page also provides three types of analysis views:
+- 10-fold cross-validation results
+- Best hyper-parameters
+- Accuracy performance (training/testing accuracy and fitting plots)
+
+### 3.4 New task
+New task is used to run prediction tasks and supports:
+- Single-task prediction
+- Batch prediction
+
+#### Single-Task Prediction
+Steps:
+1. Enter `Task name`
+2. Select `Product type`
+3. Select `Product name`
+4. Enter product and cushioning parameters, for example:
+   - Product ID
+   - Product mass
+   - Length / Width / Height
+   - Liner category / density / thickness
+   - Fragility
+5. Click `Start prediction`
+6. The page returns:
+   - `Predicted acceleration`
+   - `Predicted result`
+   - Result table
+7. Click `SHAP` on a result row to generate an explanatory waterfall chart
+
+#### Batch Prediction
+Steps:
+1. Switch to `Multiple tasks`
+2. Click `Download template`
+3. Fill in multiple plans using the template
+4. Upload an `.xlsx` / `.csv` file
+5. Select the product type and product name
+6. Click `Start prediction`
+7. View the batch results and generate SHAP explanations row by row
+
+#### Projects and History
+New task supports project-based management, but **a project is not required**.
+- If no project is selected, the task is saved directly in `backend/data/New task/`
+- If a project is selected, the task is saved in `backend/data/New task/<projectName>/`
+
+The sidebar supports:
+- Creating projects
+- Renaming projects
+- Deleting projects
+- Renaming tasks
+- Moving tasks to another project
+- Pinning tasks
+- Archiving tasks
+- Deleting tasks
+
+The search dialog can search historical tasks by task name, file name, and project name.
+
+### 3.5 Explore
+Explore is used for reverse design and feasible-region analysis based on the currently active model.
+Steps:
+1. Select `Product type`
+2. Select `Product name`
+3. Confirm that the product has an active model
+4. Enter fixed product parameters:
+   - Product length
+   - Product width
+   - Product height
+   - Product mass
+5. Enter search parameters:
+   - Threshold
+   - Density step
+   - Thickness step
+6. Set search ranges for `EPE / EPP / EPS` respectively
+7. Click `Start reverse design`
+
+The result area displays:
+- Best feasible scheme
+- Best scheme for each material category
+- Feasible / Infeasible distribution
+- Feasible-region heatmap
+
+Notes:
+- Explore only lists products with **active models**
+- If no version is active in Library, the product will not be available in Explore
+
+### 3.6 Accounts and Settings
+In the current build:
+- The profile dialog is still available
+- `Settings > General` is available
+- The content of `Settings > Account` has been temporarily cleared, and the original user management panel is not shown
+
+Notes:
+- The backend still keeps the `/api/account/*` management endpoints
+- Only the current frontend UI does not display this part for now
+
+## 4. System Runtime Logic
+### 4.1 Frontend Runtime Logic
+The frontend entry point is `frontend/src/main.tsx`, and the core container is `frontend/src/App.tsx`.
+Startup sequence:
+1. React mounts `App`
+2. `App` first checks whether a login session exists in browser `localStorage`
+3. If a token exists, it calls `/api/auth/session` to validate the session
+4. If validation fails, it returns to the login page
+5. If validation succeeds, it enters the main interface
+
+API call rules:
+- All requests are sent through `requestApi()`
+- If a local token exists, `Authorization: Bearer <token>` is added automatically
+- If a non-authentication API returns `401`, the frontend clears the local session and forces a return to the login page
+
+Page switching logic:
+- `Home`
+- `Library`
+- `New task`
+- `Explore`
+
+These pages are all controlled centrally by `App.tsx`. This is not a multi-page website, but navigation inside a single-page application.
+
+### 4.2 Backend Runtime Logic
+The backend entry point is `backend/server.mjs`.
+At startup, it performs the following:
+1. `app.use(cors())`
+2. `app.use(express.json())`
+3. Initialize the user/session/task output directories
+4. Start Express listening on the configured port
+5. Automatically detect and attempt to start R plumber
+
+Authentication logic:
+- `/api/auth/register`
+- `/api/auth/login`
+- `/api/auth/session`
+- `/api/auth/logout`
+
+Except for `/api/health` and `/api/auth/*`, all other `/api/*` requests require authentication by default.
+
+Authorization logic:
+- `/api/account/*`: admin only
+- `/api/library/*`: requires `library` permission
+- `/api/new-task/*`: requires `newTask` permission
+- `/api/projects/*`: requires `newTask` permission
+- `/api/explore/*`: requires `explore` permission
+
+### 4.3 User and Session Logic
+Users and sessions are both stored in local JSON files:
+- `backend/database/users.json`
+- `backend/database/sessions.json`
+
+Characteristics:
+- Passwords are stored as `scrypt` hashes
+- Sessions use random tokens
+- Sessions are valid for about 30 days by default
+- Sessions are cleaned up after a user is disabled or expires
+
+### 4.4 Model Library Runtime Logic
+After a model is uploaded, its files are saved in a directory similar to:
+
+```text
+backend/database/<productType>/<productName>/<modelVersion>/
 ```
 
-构建生产包时，前端会把这个值写入打包结果。你的后端如果通过同一域名下的 `/api` 对外提供接口，这里就直接填主域名，例如 `https://bufferpack.example.com`。
+When activating a model, the backend maintains `.model-deployment.json` in the product directory to mark the currently enabled version.
+The data shown on the Library page mainly comes from:
+- Disk directory scanning
+- Version metadata
+- R analysis results
+- Uploaded attachment files
 
-PowerShell 临时构建示例：
+The Node backend is responsible for:
+- Validating upload parameters
+- Saving files
+- Building the directory structure
+- Reading product and version lists
+- Calling the R service to perform analysis or return results
 
-```powershell
-cd frontend
-$env:VITE_API_BASE_URL='https://your-domain.example.com'
-npm run build
-```
+### 4.5 New Task Prediction Runtime Logic
+The core flow for single-task and batch prediction is the same; only the input source differs.
 
-### 后端
+#### Single Task
+1. The frontend submits the form data to `/api/new-task/start-prediction`
+2. The backend converts the input parameters into an Excel workbook
+3. The workbook is written to `backend/data/New task[/project]/`
+4. The backend finds the currently active model based on `productType + productName`
+5. The backend calls R plumber's `/new-task-prediction`
+6. R returns prediction result rows
+7. The backend saves:
+   - The original input workbook
+   - The prediction result workbook
+   - `*_task-summary.json`
+8. After receiving the result, the frontend refreshes task history
 
-仓库已提供示例文件 `backend/.env.example`，用于整理部署时需要的变量名。当前后端代码不会自动读取 `.env` 文件，生产环境应当由部署平台或启动脚本注入这些变量。
+#### Batch Task
+1. The frontend uploads `.xlsx/.xls/.csv`
+2. The backend parses the file and converts it into a standardized task header format
+3. The remaining flow is the same as single-task prediction
 
-常用变量：
+### 4.6 SHAP Explanation Runtime Logic
+After clicking `SHAP` on a result row:
+1. The frontend submits `productType / productName / fileName / targetId` to `/api/new-task/shap-waterfall`
+2. The backend locates the input file saved for that task
+3. The backend locates the currently active model
+4. The backend calls R plumber's `/new-task-shap-waterfall`
+5. R returns:
+   - baseline
+   - prediction
+   - steps
+6. The frontend renders the data as an interactive waterfall chart
 
-- `PORT`：Node/Express 对外监听端口，默认 `8787`
-- `R_HOME`：R 安装根目录
-- `RSCRIPT_PATH`：`Rscript` 可执行文件完整路径
-- `R_PLUMBER_PORT`：R plumber 服务端口，默认 `8791`
-- `R_PLUMBER_EXTERNAL`：设为 `1` 时，表示 plumber 由外部单独托管
+### 4.7 Explore Reverse Design Runtime Logic
+The Explore flow is as follows:
+1. The frontend first requests `/api/explore/active-products`
+2. The backend returns only products that have active models
+3. The user configures fixed parameters, thresholds, step sizes, and material search ranges
+4. The frontend submits the request to `/api/explore/reverse-design`
+5. The backend locates the currently active model
+6. The backend calls R plumber's `/explore-reverse-design`
+7. R returns:
+   - Grid results
+   - Best scheme for each material
+   - Global best scheme
+   - Feasible-point statistics
+8. The frontend renders tables and heatmaps
 
-### 发布前检查
+### 4.8 Task History and Project Logic
+Task history is not stored in a separate database table. Instead, it is composed jointly by the file system and summary files.
+The backend maintains:
+- Input files: `Task_*.xlsx`
+- Prediction result files: `*_predicted results.xlsx`
+- Task summaries: `*_task-summary.json`
+- Project metadata: `.project-meta.json`
 
-- 前端生产环境不要再回退到 `http://localhost:8787`
-- 后端所在主机必须具备持久化磁盘，因为模型库和任务结果会写入本地目录
-- 公开发布前，建议把后端 CORS 从全开放改成仅允许你的正式域名
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## 目录结构说明
-### frontend 顶层目录
-- `src/`：前端核心源码目录（页面、组件、样式、入口）。
-- `public/`：静态资源目录，构建时原样拷贝到产物。
-- `dist/`：构建输出目录（打包后的 HTML/CSS/JS）。
-- `node_modules/`：依赖安装目录（自动生成，不手动修改）。
-
-### frontend 顶层文件
-- `index.html`：Vite 应用模板页，包含 `#root` 挂载点。
-- `package.json`：项目依赖与脚本配置（`dev/build/lint/preview`）。
-- `package-lock.json`：依赖锁定文件，保证安装版本一致。
-- `vite.config.ts`：Vite 开发与构建配置。
-- `eslint.config.js`：ESLint 规则配置。
-- `tsconfig.json`：TypeScript 总配置入口。
-- `tsconfig.app.json`：应用端 TypeScript 配置。
-- `tsconfig.node.json`：Node/Vite 配置文件的 TypeScript 配置。
-- `README.md`：frontend 子项目说明文档。
-- `BufferPack Designer_V3.0.R`：R 脚本文件（建模/算法相关，不属于 React 运行入口）。
-- `.gitignore`：frontend 范围内 Git 忽略规则。
-
-### src 目录
-- `main.tsx`：前端入口，挂载 React 根组件。
-- `App.tsx`：应用主框架（左侧导航、折叠逻辑、顶部区域、页面切换）。
-- `App.css`：主布局与组件样式（侧栏、主区、卡片、表单、响应式）。
-- `index.css`：全局样式与主题变量（颜色、字体、基础样式）。
-
-### src/pages
-- `Explain.tsx`：首页/说明页，展示平台介绍和功能概览。
-- `Data.tsx`：数据输入页（数值输入、文件上传、CSV 预览）。
-
-### src/features/components
-- `TrainForm.tsx`：模型预览组件（模型上传、算法选择、参数与图表占位）。
-- `PredictForm.tsx`：预测组件（分类/回归模型选择、结果占位与样例表格）。
-
-## React Compiler
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The frontend search function and sidebar task list both essentially read this summary information from `/api/new-task/tasks` and then display it.

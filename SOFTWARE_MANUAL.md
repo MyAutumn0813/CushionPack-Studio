@@ -1,438 +1,325 @@
-# CushionPack Studio 软件说明
+# CushionPack Studio Platform Overview and User Guide
 
-## 1. 技术栈
-
-| 层级 | 语言 / 框架 | 说明 |
+## 1. Technology Stack
+| Layer | Language / Framework | Description |
 | --- | --- | --- |
-| 前端 | TypeScript + React 19 + Vite | 负责页面、交互、状态管理和接口调用。 |
-| 后端 API | JavaScript（Node.js ESM）+ Express | 负责认证、权限、文件管理、任务编排、项目管理和对 R 服务的调度。 |
-| 算法计算层 | R + plumber + tidymodels + xgboost + ggplot2 | 负责模型分析、预测、SHAP 解释和逆向设计计算。 |
-| 文件处理 | `xlsx`、`multer` | 负责 Excel/CSV 读写和上传文件接收。 |
-| 数据存储 | 本地文件系统 + JSON | 负责模型库、任务结果、用户、会话和项目元数据持久化。 |
+| Frontend | TypeScript + React 19 + Vite | Responsible for pages, interactions, state management, and API calls. |
+| Backend API | JavaScript (Node.js ESM) + Express | Responsible for authentication, authorization, file management, task orchestration, project management, and coordination with the R service. |
+| Algorithm Layer | R + plumber + tidymodels + xgboost + ggplot2 | Responsible for model analysis, prediction, SHAP interpretation, and reverse design calculations. |
+| File Processing | `xlsx`, `multer` | Responsible for Excel/CSV reading and writing, and uploaded file handling. |
+| Data Storage | Local file system + JSON | Responsible for persistence of the model library, task results, users, sessions, and project metadata. |
 
-### 结论
+### Summary
+- Frontend language: **TypeScript**
+- Primary backend language: **JavaScript**
+- Algorithm/modeling language: **R**
 
-- 前端语言：**TypeScript**
-- 后端主语言：**JavaScript**
-- 算法/建模语言：**R**
+In other words, this system is not a simple two-layer frontend/backend structure. It consists of:
 
-也就是说，这个系统不是“纯前后端二层结构”，而是：
+1. A React frontend
+2. A Node/Express API layer
+3. An R plumber algorithm service layer
 
-1. React 前端
-2. Node/Express API 层
-3. R plumber 算法服务层
-
-## 2. 关键目录
-
+## 2. Key Directory Overview
+The platform codebase mainly includes the following:
 - `frontend/`
-  - React 前端工程。
+  - React frontend project.
 - `frontend/src/App.tsx`
-  - 前端主框架，控制登录态、侧边栏、页面切换、项目与任务历史。
+  - Main frontend framework that controls authentication state, sidebar, page switching, projects, and task history.
 - `frontend/src/pages/Library.tsx`
-  - 模型库页面。
+  - Model library page.
 - `frontend/src/pages/New task.tsx`
-  - 新任务页面，支持单任务和批量任务预测。
+  - New task page, supporting both single-task and batch prediction.
 - `frontend/src/pages/Explore.tsx`
-  - 逆向设计页面。
+  - Reverse design page.
 - `frontend/src/features/api.ts`
-  - 前端统一接口请求封装。
+  - Unified frontend API request wrapper.
 - `backend/server.mjs`
-  - Node/Express 主服务。
+  - Main Node/Express service.
 - `backend/r-api/library-api.R`
-  - R plumber API，提供预测、SHAP、逆向设计、精度分析等能力。
+  - R plumber API providing prediction, SHAP, reverse design, accuracy analysis, and related capabilities.
 - `backend/r-api/run-library-api.R`
-  - R plumber 启动入口。
+  - R plumber startup entry point.
 - `backend/database/`
-  - 用户、会话、模型库数据目录。
+  - Data directory for users, sessions, and the model library.
 - `backend/data/New task/`
-  - 新任务输入文件、预测结果文件、任务摘要的保存目录。
+  - Storage directory for new task input files, prediction result files, and task summaries.
 
-## 3. 启动方式
+## 3. Web Platform User Guide
+The current web platform is a developer preview. Users can access the main features, and platform security will continue to be improved later.
 
-### 3.1 环境要求
-
-- Node.js + npm
-- R 环境
-- R 依赖包：`plumber`、`jsonlite`、`tidymodels`、`xgboost`、`dplyr`、`tidyr`、`purrr`、`ggplot2`、`rio`、`tibble`
-
-### 3.2 后端启动
-
-```powershell
-cd backend
-npm install
-npm run dev
+### 3.1 Login and Registration
+Access the platform through the following link:
+```text
+https://cushionpackaging.fy.takin.cc
 ```
+When entering the system for the first time, the login page is shown first.
+- `Sign up`: register a local account
+- `Sign in`: log in with an existing account
 
-后端默认端口是 `8787`。启动后会：
+At present, users can log in directly with an email address and password.
+Rules:
+- The email address must be valid
+- The password must be at least 8 characters long
 
-1. 初始化 `backend/database` 和 `backend/data/New task`
-2. 启动 Express API
-3. 尝试自动启动或连接 R plumber 服务
+After a successful login, the frontend stores `token + user` in browser storage.
 
-可用环境变量见 `backend/.env.example`，常用项：
+### 3.2 Home
+The Home page is mainly used to present the system positioning and capability overview. It does not participate in data computation.
 
-- `PORT=8787`
-- `R_HOME=...`
-- `RSCRIPT_PATH=...`
-- `R_PLUMBER_HOST=127.0.0.1`
-- `R_PLUMBER_PORT=8791`
-- `R_PLUMBER_EXTERNAL=0`
+### 3.3 Library
+Library is the model management center, with four main purposes:
+1. View existing product models
+2. Upload and deploy new models
+3. Activate a specific model version
+4. View model analysis results
 
-### 3.3 前端启动
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-前端开发服务器通过 Vite 代理把 `/api` 请求转发到 `http://localhost:8787`。
-
-### 3.4 生产构建
-
-```powershell
-cd frontend
-npm run build
-```
-
-生产环境前端通过 `VITE_API_BASE_URL` 指向后端地址。
-
-## 4. 网页软件使用说明
-
-### 4.1 登录与注册
-
-首次进入系统会先显示登录页。
-
-- `Sign up`：注册本地账号
-- `Sign in`：登录已有账号
-
-规则：
-
-- 邮箱必须合法
-- 密码长度至少 8 位
-- **第一个注册的用户会自动成为管理员**
-
-登录成功后，前端会把 `token + user` 保存在浏览器 `localStorage` 中。
-
-### 4.2 首页 Home
-
-Home 页主要用于展示系统定位和能力概览，不参与数据计算。
-
-### 4.3 模型库 Library
-
-Library 是模型管理中心，主要用途有四类：
-
-1. 查看已有产品模型
-2. 上传和部署新模型
-3. 激活某个模型版本
-4. 查看模型分析结果
-
-典型操作流程：
-
-1. 选择 `Product type`
-2. 选择 `Product name`
-3. 查看当前激活模型的版本、更新时间、模型文件名
-4. 点击 `Deploy model` 打开上传弹窗
-5. 填写：
+Typical workflow:
+1. Select `Product type`
+2. Select `Product name`
+3. View the currently active model version, update time, and model file name
+4. Click `Deploy model` to open the upload dialog
+5. Fill in:
    - `Product type`
    - `Product name`
    - `Model version`
-6. 上传文件：
-   - 必填：`all model file`
-   - 必填：`final model file`
-   - 必填：`data train file`
-   - 必填：`data test file`
-   - 选填：`Validation_accuracy.xlsx`
-   - 选填：`Best_hyperparamter.xlsx`
-7. 上传完成后，可对某个版本执行：
+6. Upload files:
+   - Required: `all model file`
+   - Required: `final model file`
+   - Required: `data train file`
+   - Required: `data test file`
+   - Optional: `Validation_accuracy.xlsx`
+   - Optional: `Best_hyperparamter.xlsx`
+7. After the upload is complete, you can perform the following actions on a version:
    - `Activate`
    - `Delete version`
 
-页面还提供三类分析展示：
-
-- 10-fold cross-validation 结果
+The page also provides three types of analysis views:
+- 10-fold cross-validation results
 - Best hyper-parameters
-- Accuracy performance（训练/测试精度与拟合图）
+- Accuracy performance (training/testing accuracy and fitting plots)
 
-### 4.4 新任务 New task
+### 3.4 New task
+New task is used to run prediction tasks and supports:
+- Single-task prediction
+- Batch prediction
 
-New task 用于运行预测任务，支持：
-
-- 单任务预测
-- 批量预测
-
-#### 单任务预测
-
-操作步骤：
-
-1. 输入 `Task name`
-2. 选择 `Product type`
-3. 选择 `Product name`
-4. 输入产品与缓冲参数，例如：
+#### Single-Task Prediction
+Steps:
+1. Enter `Task name`
+2. Select `Product type`
+3. Select `Product name`
+4. Enter product and cushioning parameters, for example:
    - Product ID
    - Product mass
    - Length / Width / Height
    - Liner category / density / thickness
    - Fragility
-5. 点击 `Start prediction`
-6. 页面返回：
+5. Click `Start prediction`
+6. The page returns:
    - `Predicted acceleration`
    - `Predicted result`
-   - 结果表格
-7. 点击某条结果的 `SHAP`，可生成解释瀑布图
+   - Result table
+7. Click `SHAP` on a result row to generate an explanatory waterfall chart
 
-#### 批量预测
+#### Batch Prediction
+Steps:
+1. Switch to `Multiple tasks`
+2. Click `Download template`
+3. Fill in multiple plans using the template
+4. Upload an `.xlsx` / `.csv` file
+5. Select the product type and product name
+6. Click `Start prediction`
+7. View the batch results and generate SHAP explanations row by row
 
-操作步骤：
+#### Projects and History
+New task supports project-based management, but **a project is not required**.
+- If no project is selected, the task is saved directly in `backend/data/New task/`
+- If a project is selected, the task is saved in `backend/data/New task/<projectName>/`
 
-1. 切换到 `Multiple tasks`
-2. 点击 `Download template`
-3. 按模板填写多条方案
-4. 上传 `.xlsx` / `.csv` 文件
-5. 选择产品类型和产品名称
-6. 点击 `Start prediction`
-7. 查看批量结果并按行生成 SHAP
+The sidebar supports:
+- Creating projects
+- Renaming projects
+- Deleting projects
+- Renaming tasks
+- Moving tasks to another project
+- Pinning tasks
+- Archiving tasks
+- Deleting tasks
 
-#### 项目与历史
+The search dialog can search historical tasks by task name, file name, and project name.
 
-New task 支持项目化管理，但**项目不是必填**。
-
-- 不选项目时，任务直接保存在 `backend/data/New task/`
-- 选定项目后，任务保存在 `backend/data/New task/<projectName>/`
-
-侧边栏支持：
-
-- 创建项目
-- 重命名项目
-- 删除项目
-- 任务重命名
-- 任务移动到其他项目
-- 任务置顶
-- 任务归档
-- 任务删除
-
-搜索弹窗可按任务名、文件名、项目名检索历史任务。
-
-### 4.5 逆向设计 Explore
-
-Explore 用于根据已激活模型做逆向设计和可行域分析。
-
-操作步骤：
-
-1. 选择 `Product type`
-2. 选择 `Product name`
-3. 确认该产品有激活模型
-4. 输入固定产品参数：
+### 3.5 Explore
+Explore is used for reverse design and feasible-region analysis based on the currently active model.
+Steps:
+1. Select `Product type`
+2. Select `Product name`
+3. Confirm that the product has an active model
+4. Enter fixed product parameters:
    - Product length
    - Product width
    - Product height
    - Product mass
-5. 输入搜索参数：
+5. Enter search parameters:
    - Threshold
    - Density step
    - Thickness step
-6. 分别给 `EPE / EPP / EPS` 设置搜索范围
-7. 点击 `Start reverse design`
+6. Set search ranges for `EPE / EPP / EPS` respectively
+7. Click `Start reverse design`
 
-结果区域会显示：
-
+The result area displays:
 - Best feasible scheme
-- 各材料类别的最佳方案
-- Feasible / Infeasible 分布
-- 可行域热力图
+- Best scheme for each material category
+- Feasible / Infeasible distribution
+- Feasible-region heatmap
 
-注意：
+Notes:
+- Explore only lists products with **active models**
+- If no version is active in Library, the product will not be available in Explore
 
-- Explore 只会列出**已经激活模型**的产品
-- 如果 Library 里没有激活版本，Explore 里就不会可用
+### 3.6 Accounts and Settings
+In the current build:
+- The profile dialog is still available
+- `Settings > General` is available
+- The content of `Settings > Account` has been temporarily cleared, and the original user management panel is not shown
 
-### 4.6 账号与设置
+Notes:
+- The backend still keeps the `/api/account/*` management endpoints
+- Only the current frontend UI does not display this part for now
 
-当前构建中：
+## 4. System Runtime Logic
+### 4.1 Frontend Runtime Logic
+The frontend entry point is `frontend/src/main.tsx`, and the core container is `frontend/src/App.tsx`.
+Startup sequence:
+1. React mounts `App`
+2. `App` first checks whether a login session exists in browser `localStorage`
+3. If a token exists, it calls `/api/auth/session` to validate the session
+4. If validation fails, it returns to the login page
+5. If validation succeeds, it enters the main interface
 
-- 个人资料弹窗仍可使用
-- `Settings > General` 可使用
-- `Settings > Account` 内容已被临时清空，不显示原用户管理面板
+API call rules:
+- All requests are sent through `requestApi()`
+- If a local token exists, `Authorization: Bearer <token>` is added automatically
+- If a non-authentication API returns `401`, the frontend clears the local session and forces a return to the login page
 
-说明：
-
-- 后端仍保留 `/api/account/*` 管理接口
-- 只是当前前端 UI 暂时不展示这部分内容
-
-## 5. 系统运行逻辑
-
-### 5.1 前端运行逻辑
-
-前端入口是 `frontend/src/main.tsx`，核心容器是 `frontend/src/App.tsx`。
-
-启动顺序：
-
-1. React 挂载 `App`
-2. `App` 先检查浏览器 `localStorage` 中是否存在登录会话
-3. 如果存在 token，调用 `/api/auth/session` 验证会话
-4. 验证失败则回到登录页
-5. 验证成功则进入主界面
-
-接口调用规则：
-
-- 所有请求都通过 `requestApi()` 发起
-- 如果本地存在 token，会自动加上 `Authorization: Bearer <token>`
-- 如果某次非认证接口返回 `401`，前端会清空本地会话并强制回到登录页
-
-页面切换逻辑：
-
+Page switching logic:
 - `Home`
 - `Library`
 - `New task`
 - `Explore`
 
-这些页面都由 `App.tsx` 统一控制，不是多页网站，而是单页应用内部切换。
+These pages are all controlled centrally by `App.tsx`. This is not a multi-page website, but navigation inside a single-page application.
 
-### 5.2 后端运行逻辑
-
-后端入口是 `backend/server.mjs`。
-
-启动时会执行：
-
+### 4.2 Backend Runtime Logic
+The backend entry point is `backend/server.mjs`.
+At startup, it performs the following:
 1. `app.use(cors())`
 2. `app.use(express.json())`
-3. 初始化用户/会话/任务输出目录
-4. 启动 Express 监听端口
-5. 自动检测并尝试启动 R plumber
+3. Initialize the user/session/task output directories
+4. Start Express listening on the configured port
+5. Automatically detect and attempt to start R plumber
 
-认证逻辑：
-
+Authentication logic:
 - `/api/auth/register`
 - `/api/auth/login`
 - `/api/auth/session`
 - `/api/auth/logout`
 
-除 `/api/health` 和 `/api/auth/*` 外，其他 `/api/*` 请求默认都要先过认证。
+Except for `/api/health` and `/api/auth/*`, all other `/api/*` requests require authentication by default.
 
-权限逻辑：
+Authorization logic:
+- `/api/account/*`: admin only
+- `/api/library/*`: requires `library` permission
+- `/api/new-task/*`: requires `newTask` permission
+- `/api/projects/*`: requires `newTask` permission
+- `/api/explore/*`: requires `explore` permission
 
-- `/api/account/*`：仅管理员
-- `/api/library/*`：需要 `library` 权限
-- `/api/new-task/*`：需要 `newTask` 权限
-- `/api/projects/*`：需要 `newTask` 权限
-- `/api/explore/*`：需要 `explore` 权限
-
-### 5.3 用户与会话逻辑
-
-用户和会话都存在本地 JSON 文件中：
-
+### 4.3 User and Session Logic
+Users and sessions are both stored in local JSON files:
 - `backend/database/users.json`
 - `backend/database/sessions.json`
 
-特点：
+Characteristics:
+- Passwords are stored as `scrypt` hashes
+- Sessions use random tokens
+- Sessions are valid for about 30 days by default
+- Sessions are cleaned up after a user is disabled or expires
 
-- 密码使用 `scrypt` 哈希保存
-- 会话使用随机 token
-- 会话默认有效期约 30 天
-- 用户被禁用或过期后，会话会被清理
-
-### 5.4 模型库运行逻辑
-
-模型上传后，文件会被保存到类似目录：
+### 4.4 Model Library Runtime Logic
+After a model is uploaded, its files are saved in a directory similar to:
 
 ```text
 backend/database/<productType>/<productName>/<modelVersion>/
 ```
 
-激活模型时，后端会在产品目录下维护 `.model-deployment.json`，用于标记当前启用的版本。
+When activating a model, the backend maintains `.model-deployment.json` in the product directory to mark the currently enabled version.
+The data shown on the Library page mainly comes from:
+- Disk directory scanning
+- Version metadata
+- R analysis results
+- Uploaded attachment files
 
-Library 页面显示的数据，主要来自：
+The Node backend is responsible for:
+- Validating upload parameters
+- Saving files
+- Building the directory structure
+- Reading product and version lists
+- Calling the R service to perform analysis or return results
 
-- 磁盘目录扫描
-- 版本元数据
-- R 分析结果
-- 已上传的附件文件
+### 4.5 New Task Prediction Runtime Logic
+The core flow for single-task and batch prediction is the same; only the input source differs.
 
-Node 后端负责：
-
-- 校验上传参数
-- 保存文件
-- 构造目录结构
-- 读取产品和版本列表
-- 调用 R 服务做分析或返回结果
-
-### 5.5 新任务预测运行逻辑
-
-单任务和批量任务的核心链路一致，只是输入来源不同。
-
-#### 单任务
-
-1. 前端把表单数据提交到 `/api/new-task/start-prediction`
-2. 后端把输入参数转换为 Excel 工作簿
-3. 工作簿写入 `backend/data/New task[/project]/`
-4. 后端根据 `productType + productName` 找到当前激活模型
-5. 后端调用 R plumber 的 `/new-task-prediction`
-6. R 返回预测结果行
-7. 后端保存：
-   - 原始输入工作簿
-   - 预测结果工作簿
+#### Single Task
+1. The frontend submits the form data to `/api/new-task/start-prediction`
+2. The backend converts the input parameters into an Excel workbook
+3. The workbook is written to `backend/data/New task[/project]/`
+4. The backend finds the currently active model based on `productType + productName`
+5. The backend calls R plumber's `/new-task-prediction`
+6. R returns prediction result rows
+7. The backend saves:
+   - The original input workbook
+   - The prediction result workbook
    - `*_task-summary.json`
-8. 前端收到结果后刷新任务历史
+8. After receiving the result, the frontend refreshes task history
 
-#### 批量任务
+#### Batch Task
+1. The frontend uploads `.xlsx/.xls/.csv`
+2. The backend parses the file and converts it into a standardized task header format
+3. The remaining flow is the same as single-task prediction
 
-1. 前端上传 `.xlsx/.xls/.csv`
-2. 后端解析并统一转成标准任务表头
-3. 后续流程与单任务相同
-
-### 5.6 SHAP 解释运行逻辑
-
-点击结果行的 `SHAP` 后：
-
-1. 前端把 `productType / productName / fileName / targetId` 提交给 `/api/new-task/shap-waterfall`
-2. 后端定位该任务保存下来的输入文件
-3. 后端定位当前激活模型
-4. 后端调用 R plumber 的 `/new-task-shap-waterfall`
-5. R 返回：
+### 4.6 SHAP Explanation Runtime Logic
+After clicking `SHAP` on a result row:
+1. The frontend submits `productType / productName / fileName / targetId` to `/api/new-task/shap-waterfall`
+2. The backend locates the input file saved for that task
+3. The backend locates the currently active model
+4. The backend calls R plumber's `/new-task-shap-waterfall`
+5. R returns:
    - baseline
    - prediction
    - steps
-6. 前端把这些数据渲染成交互式瀑布图
+6. The frontend renders the data as an interactive waterfall chart
 
-### 5.7 Explore 逆向设计运行逻辑
+### 4.7 Explore Reverse Design Runtime Logic
+The Explore flow is as follows:
+1. The frontend first requests `/api/explore/active-products`
+2. The backend returns only products that have active models
+3. The user configures fixed parameters, thresholds, step sizes, and material search ranges
+4. The frontend submits the request to `/api/explore/reverse-design`
+5. The backend locates the currently active model
+6. The backend calls R plumber's `/explore-reverse-design`
+7. R returns:
+   - Grid results
+   - Best scheme for each material
+   - Global best scheme
+   - Feasible-point statistics
+8. The frontend renders tables and heatmaps
 
-Explore 的链路如下：
+### 4.8 Task History and Project Logic
+Task history is not stored in a separate database table. Instead, it is composed jointly by the file system and summary files.
+The backend maintains:
+- Input files: `Task_*.xlsx`
+- Prediction result files: `*_predicted results.xlsx`
+- Task summaries: `*_task-summary.json`
+- Project metadata: `.project-meta.json`
 
-1. 前端先请求 `/api/explore/active-products`
-2. 后端只返回“有激活模型”的产品
-3. 用户配置固定参数、阈值、步长和材料搜索范围
-4. 前端提交到 `/api/explore/reverse-design`
-5. 后端定位当前激活模型
-6. 后端调用 R plumber 的 `/explore-reverse-design`
-7. R 返回：
-   - 网格结果
-   - 各材料最佳方案
-   - 全局最佳方案
-   - 可行点统计
-8. 前端渲染表格和热力图
-
-### 5.8 任务历史与项目逻辑
-
-任务历史不是单独数据库表，而是由文件系统和摘要文件共同组成。
-
-后端会维护：
-
-- 输入文件：`Task_*.xlsx`
-- 预测结果文件：`*_predicted results.xlsx`
-- 任务摘要：`*_task-summary.json`
-- 项目元数据：`.project-meta.json`
-
-前端搜索和侧边栏任务列表，本质上都是从 `/api/new-task/tasks` 读取这些摘要信息后再做展示。
-
-## 6. 一句话理解整套系统
-
-这套软件的本质是：
-
-**前端负责交互，Node 后端负责权限与文件编排，R 服务负责真正的建模计算和解释分析。**
-
-如果只看“编程语言”：
-
-- 前端：TypeScript
-- 后端：JavaScript
-- 算法：R
-
+The frontend search function and sidebar task list both essentially read this summary information from `/api/new-task/tasks` and then display it.
